@@ -1,14 +1,14 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // API base URL - hardcoded to localhost since process.env is causing errors in the browser
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://diafit-j318.onrender.com/api';
 
 // Custom error class for API errors
 export class ApiError extends Error {
   status: number;
-  data: any;
+  data: unknown;
 
-  constructor(message: string, status: number, data?: any) {
+  constructor(message: string, status: number, data?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
