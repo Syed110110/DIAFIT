@@ -38,7 +38,7 @@ export const signup = async (req: Request, res: Response) => {
 
     if (user) {
       console.log('User created successfully:', user._id);
-      const token = generateToken(user._id);
+      const token = generateToken(user._id.toString());
       
       // Send response with token
       res.status(201).json({
@@ -74,7 +74,7 @@ export const signin = async (req: Request, res: Response) => {
     }
 
     console.log('User authenticated successfully:', user._id);
-    const token = generateToken(user._id);
+  const token = generateToken(user._id.toString());
     
     res.json({
       _id: user._id,

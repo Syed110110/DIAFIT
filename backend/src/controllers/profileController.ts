@@ -117,7 +117,7 @@ export const updateProfile = async (req: Request, res: Response) => {
         
         // Create a new healthMetrics object if it doesn't exist
         if (!profile.healthMetrics) {
-          profile.healthMetrics = {};
+          profile.healthMetrics = {} as any;
         }
         
         // Only update provided metrics
