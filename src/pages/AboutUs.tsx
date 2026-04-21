@@ -1,27 +1,15 @@
 import React from 'react';
 import { Activity, Heart, Award } from 'lucide-react';
+import myPhoto from '../assets/my-photo.jpg';
 
-const AboutUs = () => {
-  const team = [
-    {
-      name: "Rimsha",
-      role: "Founder & CEO",
-      image: "https://media.istockphoto.com/id/1496613385/photo/smiling-confident-latin-woman-looking-at-camera.jpg?s=612x612&w=0&k=20&c=rDn837m8OMd_uN8_hduEScGzARZznKFWfn45kQJ2j7A=",
-      description: "Leading the vision for better diabetes management"
-    },
-    {
-      name: "Syed",
-      role: "Chief Medical Officer",
-      image: "https://media.istockphoto.com/id/1399565382/photo/young-happy-mixed-race-businessman-standing-with-his-arms-crossed-working-alone-in-an-office.jpg?s=612x612&w=0&k=20&c=buXwOYjA_tjt2O3-kcSKqkTp2lxKWJJ_Ttx2PhYe3VM=",
-      description: "Ensuring medical accuracy and best practices"
-    },
-    {
-      name: "Isha",
-      role: "Head of Product",
-      image: "https://media.istockphoto.com/id/1289220545/photo/beautiful-woman-smiling-with-crossed-arms.jpg?s=612x612&w=0&k=20&c=qmOTkGstKj1qN0zPVWj-n28oRA6_BHQN8uVLIXg0TF8=",
-      description: "Designing intuitive diabetes management solutions"
-    }
-  ];
+const team = [
+  {
+    name: "Syed Mohd Mehdi",
+    role: "Founder & CEO",
+    image: myPhoto, 
+    description: "Leading the vision for better diabetes management"
+  }
+];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -72,7 +60,7 @@ const AboutUs = () => {
       {/* Team Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-12">Our Team</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">Meet the Founder</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             {team.map((member, index) => (
               <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden">
