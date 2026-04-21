@@ -1,7 +1,6 @@
 import React from 'react';
 import { Activity, Heart, Award } from 'lucide-react';
-import myPhoto from '../assets/photo.jpeg';
-
+import myPhoto from '../assests/photo.jpeg';
 const team = [
   {
     name: "Syed Mohd Mehdi",
