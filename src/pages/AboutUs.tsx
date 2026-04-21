@@ -11,6 +11,7 @@ const team = [
   }
 ];
 
+const AboutUs = () => { // <--- THIS WAS MISSING
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -61,7 +62,8 @@ const team = [
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold text-center mb-12">Meet the Founder</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          {/* I centered this container so your single card looks good */}
+          <div className="max-w-sm mx-auto">
             {team.map((member, index) => (
               <div key={index} className="bg-white rounded-xl shadow-lg overflow-hidden">
                 <img
@@ -69,7 +71,7 @@ const team = [
                   alt={member.name}
                   className="w-full h-64 object-cover"
                 />
-                <div className="p-6">
+                <div className="p-6 text-center">
                   <h3 className="text-xl font-semibold mb-2">{member.name}</h3>
                   <p className="text-blue-600 font-medium mb-4">{member.role}</p>
                   <p className="text-gray-600">{member.description}</p>
@@ -97,6 +99,6 @@ const team = [
       </section>
     </div>
   );
-};
+}; // <--- This closes the function correctly
 
 export default AboutUs;
