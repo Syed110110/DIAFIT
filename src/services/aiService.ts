@@ -51,14 +51,14 @@ const aiService = {
       
       // Prepare the request
       const requestBody: ChatCompletionRequest = {
-        model:"google/gemini-2.0-flash-exp:free",
+       model: "google/gemini-2.0-flash:free"
         messages: messages,
         temperature: 0.7,
         max_tokens: 1000
       };
       
       // Send the request to OpenRouter API
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completionss", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${API_KEY}`,
