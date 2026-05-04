@@ -58,7 +58,7 @@ const aiService = {
       };
       
       // Send the request to OpenRouter API
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completionss", {
+      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${API_KEY}`,
