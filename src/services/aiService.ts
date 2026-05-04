@@ -51,7 +51,7 @@ const aiService = {
       
       // Prepare the request
     const requestBody: ChatCompletionRequest = {
-  model: "google/gemini-2.0-flash:free",
+  model: "google/gemini-2.0-flash-lite-preview-02-05:free",
   messages: messages, // Ensure there is a colon and then the variable name
   temperature: 0.7,
   max_tokens: 1000
