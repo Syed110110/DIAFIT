@@ -50,12 +50,12 @@ const aiService = {
       console.log('Using API key:', API_KEY ? 'Key is present' : 'No key found');
       
       // Prepare the request
-      const requestBody: ChatCompletionRequest = {
-       model: "google/gemini-2.0-flash:free"
-        messages: messages,
-        temperature: 0.7,
-        max_tokens: 1000
-      };
+    const requestBody: ChatCompletionRequest = {
+  model: "google/gemini-2.0-flash:free",
+  messages: messages, // Ensure there is a colon and then the variable name
+  temperature: 0.7,
+  max_tokens: 1000
+};
       
       // Send the request to OpenRouter API
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
