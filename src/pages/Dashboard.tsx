@@ -1,644 +1,212 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  Droplets, 
-  Home, 
-  Activity, 
-  Heart, 
-  Apple, 
-  User, 
-  Lightbulb,
-  Settings, 
-  Plus,
-  Minus,
-  Target,
-  Clock,
-  ChevronRight,
-  ChevronLeft
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { waterService, nutritionService, exerciseService, tipService } from '../services/dashboardService';
+import { Activity, Heart, Scale, Flame, Droplets, ChevronRight, Apple } from 'lucide-react';
+import { profileService, waterService } from '../services/dashboardService';
+import SosButton from '../components/SosButton';
 
-// Safe access helper to prevent TypeError
-function safeAccess<T, K extends keyof T>(obj: T | null | undefined, key: K): T[K] | undefined {
-  try {
-    return obj && obj[key];
-  } catch (error) {
-    console.error(`Error accessing ${String(key)}:`, error);
-    return undefined;
-  }
+// 1. We define the exact blueprints for our data so TypeScript stops complaining about "any"
+interface HealthMetrics {
+  a1c?: { value?: string };
+  bloodPressure?: { value?: string };
+  heartRate?: { value?: string };
 }
 
-// Safe array length helper
-function safeArrayLength<T>(arr: T[] | null | undefined): number {
-  if (!arr) return 0;
-  try {
-    return Array.isArray(arr) ? arr.length : 0;
-  } catch (error) {
-    console.error('Error getting array length:', error);
-    return 0;
-  }
+interface ProfileData {
+  name?: string;
+  healthMetrics?: HealthMetrics;
 }
 
-// Video carousel component - simplified without inner slider
-const FitnessVideoCarousel = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  
-  const videos = [
-    { 
-      title: "5-Minute Diabetic Stretching", 
-      duration: "5:24", 
-      image: "https://media.istockphoto.com/id/879180126/photo/picture-of-people-running-on-treadmill-in-gym.jpg?s=612x612&w=0&k=20&c=tib9Gcia2KkXmzPAgdFlyhsN3uBV0_7mMEpbJHObIaA=",
-      url: "https://www.youtube.com/watch?v=ml6cT4AZdqI" 
-    },
-    { 
-      title: "Beginner Cardio Workout", 
-      duration: "10:15", 
-      image: "https://media.istockphoto.com/id/2161380590/photo/dynamic-duo-gym-goers-engage-in-dumbbell-exercise-for-a-healthy-lifestyle.jpg?s=612x612&w=0&k=20&c=gKB4S5OSlcFPT4dFQs_IAOO1b6s_sjgco1DTwubTDak=",
-      url: "https://www.youtube.com/watch?v=M0uO8X3_tEA" 
-    },
-    { 
-      title: "Strength Training for Diabetes", 
-      duration: "15:30", 
-      image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2670&auto=format&fit=crop",
-      url: "https://www.youtube.com/watch?v=ml6cT4AZdqI" 
-    },
-    { 
-      title: "Yoga for Blood Sugar Control", 
-      duration: "20:45", 
-      image: "https://media.istockphoto.com/id/1483989816/photo/adult-arab-male-with-a-ponytail-meditating-in-a-yoga-class.jpg?s=612x612&w=0&k=20&c=FTkO8dit_ZWB_9mUk2bmkELm2mpC-NqH82nCmK1Wx6M=",
-      url: "https://www.youtube.com/watch?v=x0nZ1ZLephQ" 
-    },
-  ];
-  
-  const goToNext = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % videos.length);
-  };
-  
-  const goToPrevious = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + videos.length) % videos.length);
-  };
+interface WaterData {
+  currentAmount?: number;
+  dailyGoal?: number;
+}
 
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="p-4 border-b">
-        <h3 className="font-bold text-lg flex items-center text-gray-800">
-          <Activity className="text-green-500 mr-2" size={20} />
-          Fitness Videos
-        </h3>
-      </div>
-      
-      <div className="relative">
-        <div className="h-52 overflow-hidden">
-          <a href={videos[currentIndex].url} target="_blank" rel="noopener noreferrer">
-            <img 
-              src={videos[currentIndex].image} 
-              alt={videos[currentIndex].title}
-              className="w-full h-full object-cover cursor-pointer"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-              <div className="flex items-center text-white">
-                <Clock size={16} className="mr-2" />
-                <span className="text-sm">{videos[currentIndex].duration}</span>
-              </div>
-              <h4 className="text-white font-medium">{videos[currentIndex].title}</h4>
-            </div>
-          </a>
-          
-          <div className="absolute inset-y-0 left-0 flex items-center">
-            <button 
-              onClick={goToPrevious}
-              className="bg-black/20 hover:bg-black/40 text-white p-1 rounded-r-lg transition-colors"
-              aria-label="Previous video"
-            >
-              <ChevronLeft size={24} />
-            </button>
-          </div>
-          
-          <div className="absolute inset-y-0 right-0 flex items-center">
-            <button 
-              onClick={goToNext}
-              className="bg-black/20 hover:bg-black/40 text-white p-1 rounded-l-lg transition-colors"
-              aria-label="Next video"
-            >
-              <ChevronRight size={24} />
-            </button>
-          </div>
-        </div>
-      </div>
-      
-      <div className="p-4">
-        <p className="text-gray-600 text-sm">
-          Exercise helps improve insulin sensitivity and manage blood glucose levels.
-        </p>
-        <div className="mt-2 flex flex-col space-y-2">
-        <Link 
-          to="/exercise-videos" 
-            className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
-        >
-          View all workout videos
-          <ChevronRight size={16} className="ml-1" />
-        </Link>
-          <Link 
-            to="/exercise-tracker" 
-            className="text-sm font-medium text-green-600 hover:text-green-800 flex items-center"
-          >
-            Track your exercises
-            <ChevronRight size={16} className="ml-1" />
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Water tracker component with animations
-const WaterTracker = () => {
-  const [waterData, setWaterData] = useState({
-    totalWaterIntake: 0,
-    dailyWaterGoal: 2000, // in milliliters
-    progress: 0,
-    waterEntries: [] as Array<any>
-  });
+export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   
-  // Convert ml to glasses (assume 250ml per glass)
-  const glassSize = 250; // ml per glass
-  const totalGlasses = Math.round(waterData.totalWaterIntake / glassSize);
-  const goalGlasses = Math.round(waterData.dailyWaterGoal / glassSize);
+  // 2. We use our precise blueprints here instead of <any>
+  const [healthData, setHealthData] = useState<ProfileData | null>(null);
+  const [waterData, setWaterData] = useState<WaterData | null>(null);
   
-  const waterPercentage = Math.min(100, (waterData.totalWaterIntake / waterData.dailyWaterGoal) * 100);
-  
-  const fetchWaterData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await waterService.getTodayWaterIntake();
-      
-      if (data && typeof data === 'object') {
-        setWaterData({
-          totalWaterIntake: data.totalWaterIntake || 0,
-          dailyWaterGoal: data.dailyWaterGoal || 2000,
-          progress: data.totalWaterIntake > 0 ? Math.min((data.totalWaterIntake / data.dailyWaterGoal) * 100, 100) : 0,
-          waterEntries: Array.isArray(data.waterEntries) ? data.waterEntries : []
-        });
-        
-        console.log('Water data from API:', data);
-      }
-      return true;
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(`Failed to load water data: ${error.message}`);
-        console.error('Water data fetch error:', error);
-      } else {
-        setError('Failed to load water data');
-        console.error('Unknown water data fetch error');
-      }
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-  
-  useEffect(() => {
-    fetchWaterData();
-  }, [fetchWaterData]);
-  
-  const increaseWater = async () => {
-    try {
-      // Optimistically update UI first
-      const newTotal = waterData.totalWaterIntake + glassSize;
-      const newProgress = Math.min((newTotal / waterData.dailyWaterGoal) * 100, 100);
-      
-      // Update state optimistically
-      setWaterData({
-        ...waterData,
-        totalWaterIntake: newTotal,
-        progress: newProgress
-      });
-      
-      // Make the API call in background
-      await waterService.addWaterIntake(glassSize);
-      
-      // Refresh data silently
-      fetchWaterData();
-    } catch (err) {
-      setError('Failed to update water intake');
-      console.error(err);
-      // Revert back to original state by fetching again
-      fetchWaterData();
-    }
-  };
-  
-  const decreaseWater = async () => {
-    if (waterData.totalWaterIntake < glassSize) return;
-    
-    try {
-      // Update state optimistically
-      const newTotal = Math.max(waterData.totalWaterIntake - glassSize, 0);
-      const newProgress = Math.min((newTotal / waterData.dailyWaterGoal) * 100, 100);
-      
-      setWaterData({
-        ...waterData,
-        totalWaterIntake: newTotal,
-        progress: newProgress
-      });
-      
-      // If there are entries, delete the most recent one
-      if (waterData.waterEntries && waterData.waterEntries.length > 0) {
-        const latestEntry = waterData.waterEntries[waterData.waterEntries.length - 1];
-        await waterService.deleteWaterEntry(latestEntry._id);
-      }
-      
-      // Refresh data silently
-      fetchWaterData();
-    } catch (err) {
-      setError('Failed to update water intake');
-      console.error(err);
-      fetchWaterData();
-    }
-  };
-  
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="p-4 border-b">
-        <h3 className="font-bold text-lg flex items-center text-gray-800">
-          <Droplets className="text-blue-500 mr-2" size={20} />
-          Water Tracker
-        </h3>
-      </div>
-      
-      <div className="p-6 flex flex-col items-center">
-        <div className="relative w-40 h-40">
-          {/* Water bottle visualization */}
-          <div className="absolute inset-x-0 bottom-0 rounded-b-2xl bg-blue-400 transition-all duration-1000 ease-out" 
-               style={{ height: `${waterPercentage}%`, opacity: 0.8 }}>
-            <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute inset-x-0 top-0 h-2 bg-white opacity-30 rounded-full transform translate-y-1"></div>
-              <div className="absolute inset-x-0 top-3 h-1 bg-white opacity-20 rounded-full"></div>
-            </div>
-          </div>
-          <div className="absolute inset-0 border-4 border-blue-100 rounded-2xl"></div>
-          
-          {/* Water intake display */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-blue-800">{(waterData.totalWaterIntake / 1000).toFixed(1)}L</span>
-            <span className="text-sm text-blue-600">{waterPercentage.toFixed(0)}% of goal</span>
-          </div>
-        </div>
-        
-        {/* Water intake controls */}
-        <div className="flex items-center justify-center mt-6 space-x-4">
-          <button 
-            onClick={decreaseWater}
-            disabled={waterData.totalWaterIntake < glassSize || isLoading}
-            className="w-10 h-10 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Decrease water intake"
-          >
-            <Minus size={20} />
-          </button>
-          
-          <div className="text-center">
-            <div className="text-sm text-gray-600">Add or remove 250ml</div>
-            <div className="text-xs text-gray-500 mt-1">Goal: {(waterData.dailyWaterGoal / 1000).toFixed(1)}L daily</div>
-          </div>
-          
-          <button 
-            onClick={increaseWater}
-            disabled={isLoading}
-            className="w-10 h-10 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            aria-label="Increase water intake"
-          >
-            <Plus size={20} />
-          </button>
-        </div>
-      </div>
-      
-      <div className="px-4 pb-4">
-        <div className="bg-blue-50 rounded-lg p-3 text-sm">
-          <div className="flex items-start">
-            <Lightbulb className="text-blue-600 mr-2 flex-shrink-0 mt-0.5" size={16} />
-            <p className="text-blue-800">
-              Staying hydrated helps maintain blood sugar levels and 
-              supports kidney function. Try to drink water before meals.
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+  // 3. setStreakDays is removed so the "unused variable" error disappears
+  const [streakDays] = useState(3);
 
-// Nutrition summary component
-// Nutritional summary component with dynamic data
-const NutritionSummary = () => {
-  // Ensure entries is always an array
-  const [nutritionData, setNutritionData] = useState({
-    totalCalories: 0,
-    totalCarbs: 0,
-    totalProtein: 0,
-    totalFat: 0,
-    entries: [] as Array<any>
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  const fetchNutritionData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await nutritionService.getTodayNutrition();
-      // Ensure data is valid before setting state
-      if (data && typeof data === 'object') {
-        setNutritionData({
-          totalCalories: data.totalCalories || 0,
-          totalCarbs: data.totalCarbs || 0,
-          totalProtein: data.totalProtein || 0,
-          totalFat: data.totalFat || 0,
-          entries: Array.isArray(data.entries) ? data.entries : []
-        });
-      }
-      return true;
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(`Failed to load nutrition data: ${error.message}`);
-        console.error('Nutrition data fetch error:', error);
-      } else {
-        setError('Failed to load nutrition data');
-        console.error('Unknown nutrition data fetch error');
-      }
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-  
   useEffect(() => {
-    fetchNutritionData();
-  }, [fetchNutritionData]);
+    const fetchDashboardData = async () => {
+      try {
+        setIsLoading(true);
+        // Fetch data from both services simultaneously
+        const [profileRes, waterRes] = await Promise.all([
+          profileService.getProfile(),
+          waterService.getTodayWaterIntake()
+        ]);
+        
+        // Safely tell TypeScript that the data matches our blueprints
+        setHealthData(profileRes as ProfileData);
+        setWaterData(waterRes as WaterData);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Safely calculate percentages for progress bars
+  const currentWater = waterData?.currentAmount || 0;
+  const goalWater = waterData?.dailyGoal || 2000;
+  const waterProgress = waterData ? Math.min((currentWater / goalWater) * 100, 100) : 0;
   
   if (isLoading) {
     return (
-      <div className="bg-white rounded-xl shadow-md p-8 flex justify-center items-center">
-        <p>Loading nutrition data...</p>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="p-4 border-b">
-        <h3 className="font-bold text-lg flex items-center text-gray-800">
-          <Apple className="text-red-500 mr-2" size={20} />
-          Nutrition Summary
-        </h3>
-      </div>
-      
-      {error && (
-        <div className="px-4 pt-4">
-          <div className="bg-red-50 text-red-700 px-3 py-2 rounded-md text-sm">
-            {error}
-            <button 
-              onClick={() => setError(null)} 
-              className="ml-2 text-red-500 hover:text-red-700"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
-      
-      <div className="p-6">
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {nutritionData.totalCalories}
-            </div>
-            <div className="text-sm text-gray-500">calories</div>
-          </div>
-          
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {nutritionData.totalCarbs}g
-            </div>
-            <div className="text-sm text-gray-500">carbs</div>
-          </div>
-          
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {nutritionData.totalProtein}g
-            </div>
-            <div className="text-sm text-gray-500">protein</div>
-          </div>
-        </div>
-        
-        <div className="space-y-4">
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="font-medium text-gray-700">Carbs</span>
-              <span className="text-gray-500">150g goal</span>
-            </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-purple-500"
-                style={{ width: `${Math.min((nutritionData.totalCarbs / 150) * 100, 100)}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          <div>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="font-medium text-gray-700">Protein</span>
-              <span className="text-gray-500">80g goal</span>
-            </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-green-500"
-                style={{ width: `${Math.min((nutritionData.totalProtein / 80) * 100, 100)}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="p-4 border-t bg-gray-50">
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            {safeArrayLength(nutritionData.entries)} meals logged today
-          </div>
-          <Link 
-            to="/nutrition-tracker" 
-            className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
-          >
-            Track your meals
-            <ChevronRight size={16} className="ml-1" />
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Daily tips component
-const DailyTips = () => {
-  const [tips, setTips] = useState([
-    "Aim for 30 minutes of moderate physical activity most days of the week.",
-    "Choose whole grains over refined grains when possible.",
-    "Include more non-starchy vegetables in your meals.",
-    "Stay hydrated throughout the day.",
-    "Monitor your blood glucose regularly to understand patterns."
-  ]);
-  
-  const [isLoading, setIsLoading] = useState(false);
-  
-  useEffect(() => {
-    // This could fetch tips from an API if available
-    // For now, we'll use the hardcoded tips
-    setIsLoading(false);
-  }, []);
-  
-  if (isLoading) {
-    return (
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <div className="p-4 border-b">
-          <h3 className="font-bold text-lg flex items-center text-gray-800">
-            <Lightbulb className="text-yellow-500 mr-2" size={20} />
-            Daily Tips
-          </h3>
-        </div>
-        <div className="p-6 flex justify-center items-center">
-          <div className="text-center p-8">
-            <div className="animate-spin h-8 w-8 border-4 border-blue-500 rounded-full border-t-transparent mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading tips...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-pulse flex flex-col items-center">
+          <Activity className="h-12 w-12 text-blue-500 mb-4 animate-bounce" />
+          <p className="text-gray-500 font-medium">Loading your health hub...</p>
         </div>
       </div>
     );
   }
-  
-  return (
-    <div className="bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="p-4 border-b">
-        <h3 className="font-bold text-lg flex items-center text-gray-800">
-          <Lightbulb className="text-yellow-500 mr-2" size={20} />
-          Daily Tips
-        </h3>
-      </div>
-      
-      <div className="p-4">
-        <ul className="space-y-3">
-          {tips.map((tip, index) => (
-            <li key={index} className="flex items-start">
-              <div className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3 mt-0.5">
-                {index + 1}
-              </div>
-              <p className="text-gray-700">{tip}</p>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
-  );
-};
-
-// Main Dashboard component
-const Dashboard = () => {
-  const { user } = useAuth();
-  const [active, setActive] = useState("Dashboard");
-  
-  // Define navigation links
-  const links = [
-    { name: "Dashboard", icon: <Home className="w-5 h-5 mr-3" />, path: "/dashboard" },
-    { name: "Health Info.", icon: <Activity className="w-5 h-5 mr-3" />, path: "/MedicalInformation" },
-    { name: "Profile", icon: <User className="w-5 h-5 mr-3" />, path: "/profile" },
-    { name: "Ai Assistant", icon: <Settings className="w-5 h-5 mr-3" />, path: "/Ai-Assistant" },
-  ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className="w-64 bg-white shadow-lg">
-        <div className="p-4"></div>
-        <nav className="mt-8">
-          {links.map((item) => (
-            <Link
-              key={item.name}
-              to={item.path}
-              onClick={() => setActive(item.name)}
-              className={`flex items-center px-4 py-3 rounded-lg ${
-                active === item.name
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-gray-50"
-              }`}
-            >
-              {item.icon}
-              {item.name}
-            </Link>
-          ))}
-        </nav>
-      </div>
+    <div className="min-h-screen bg-gray-50 pb-20 relative">
+      {/* Global Emergency SOS Button */}
+      <SosButton />
 
-      {/* Main content wrapper - redesigned */}
-      <div className="flex-1 relative overflow-y-auto">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-32 h-30 bg-blue-400 opacity-20 rounded-full -mr-10 -mt-10"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-20 bg-indigo-400 opacity-20 rounded-full -ml-8 -mb-8"></div>
+      {/* Hero Welcome Section */}
+      <section className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white pt-12 pb-24 px-6 relative overflow-hidden">
+        {/* Decorative background shapes */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden opacity-20 pointer-events-none">
+          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white blur-3xl"></div>
+          <div className="absolute top-1/2 -left-24 w-64 h-64 rounded-full bg-blue-400 blur-3xl"></div>
+        </div>
 
-        {/* Content container with padding */}
-        <div className="p-6 relative z-10">
-          {/* Welcome Card */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl shadow-lg mb-6 overflow-hidden h-48">
-            <div className="flex flex-col md:flex-row">
-              <div className="p-5 text-white md:w-2/3">
-                <div className="flex items-center mb-4">
-                  <User className="bg-white text-blue-600 p-1 rounded-full mr-3" size={28} />
-                  <h2 className="text-2xl font-bold">Welcome, {user?.name || 'User'}!</h2>
-                </div>
-                <p className="mb-4 text-blue-100">
-                  Your diabetes management journey is looking great this week. Keep up with your goals!
-                </p>
-                <blockquote className="border-l-4 border-blue-300 pl-4 italic">
-                  "Diabetes is not a choice, but how you manage it is. Every healthy decision you make today is an investment in your tomorrow."
-                </blockquote>
-              </div>
-              <div className="md:w-1/3 flex items-stretch justify-end bg-blue-100 bg-opacity-20 p-0">
-                <img
-                  src="https://images.unsplash.com/photo-1607962837359-5e7e89f86776?q=80&w=2670&auto=format&fit=crop"
-                  className="w-full h-full object-cover"
-                  alt="Diabetes management illustration"
-                />
-              </div>
+        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">Welcome back, {healthData?.name?.split(' ')[0] || 'Guest'}!</h1>
+            <p className="text-blue-100 text-lg">Here is your health summary for today.</p>
+          </div>
+          
+          {/* Gamification Streak Badge */}
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-4 flex items-center gap-4 shadow-xl">
+            <div className="p-3 bg-amber-500 rounded-xl text-white shadow-lg shadow-amber-500/30">
+              <Flame className="h-8 w-8 fill-current" />
+            </div>
+            <div>
+              <p className="text-xs text-blue-100 font-bold uppercase tracking-widest mb-0.5">Current Streak</p>
+              <p className="text-2xl font-black text-white">{streakDays} Days</p>
             </div>
           </div>
+        </div>
+      </section>
 
-          {/* Main Dashboard Grid Layout */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Column 1 */}
-            <div className="space-y-6">
-              <WaterTracker />
-              <FitnessVideoCarousel />
+      {/* Main Dashboard Grid */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-12 relative z-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
+          {/* Vital Stats Card */}
+          <div className="bg-white rounded-3xl p-6 shadow-xl shadow-gray-200/50 border border-gray-100 flex flex-col">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-red-100 text-red-600 rounded-xl">
+                <Heart className="h-6 w-6" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-800">Vital Stats</h2>
             </div>
             
-            {/* Column 2 */}
-            <div className="space-y-6">
-              <NutritionSummary />
-              <DailyTips />
+            <div className="space-y-4 flex-grow">
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                <span className="text-gray-500 font-medium">Blood Glucose (A1c)</span>
+                <span className="font-bold text-gray-800">{healthData?.healthMetrics?.a1c?.value || '--'}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                <span className="text-gray-500 font-medium">Blood Pressure</span>
+                <span className="font-bold text-gray-800">{healthData?.healthMetrics?.bloodPressure?.value || '--'}</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
+                <span className="text-gray-500 font-medium">Resting Heart Rate</span>
+                <span className="font-bold text-gray-800">{healthData?.healthMetrics?.heartRate?.value || '--'} bpm</span>
+              </div>
             </div>
+            
+            <Link to="/profile" className="mt-6 flex items-center justify-center w-full py-3 bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold rounded-xl transition-colors text-sm group">
+              Update Vitals <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
-          
-          {/* Motivational banner */}
-          <div className="mt-6 bg-gradient-to-r from-green-500 to-teal-500 rounded-xl p-4 text-white flex items-center justify-between">
-            <div className="flex items-center">
-              <Heart className="mr-3" size={24} />
-              <p className="font-medium">Taking care of your health is the best investment you can make!</p>
+
+          {/* Hydration Tracker Card */}
+          <div className="bg-white rounded-3xl p-6 shadow-xl shadow-gray-200/50 border border-gray-100 flex flex-col">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2.5 bg-blue-100 text-blue-600 rounded-xl">
+                <Droplets className="h-6 w-6" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-800">Hydration</h2>
             </div>
-            <button className="bg-white text-green-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-50 transition-colors">
-              Set New Goal
-            </button>
+            
+            <div className="flex-grow flex flex-col justify-center items-center">
+              <div className="relative h-32 w-32 mb-4">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="#f3f4f6" strokeWidth="10" />
+                  <circle cx="50" cy="50" r="45" fill="none" stroke="#3b82f6" strokeWidth="10" 
+                    strokeDasharray={`${waterProgress * 2.83} 283`} strokeLinecap="round" 
+                    className="transition-all duration-1000 ease-out" />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold text-gray-800">{currentWater}</span>
+                  <span className="text-xs font-bold text-gray-400 uppercase">ml</span>
+                </div>
+              </div>
+              <p className="text-sm font-medium text-gray-500">
+                Goal: <span className="text-gray-800">{goalWater} ml</span>
+              </p>
+            </div>
+            
+            <Link to="/water-tracker" className="mt-6 flex items-center justify-center w-full py-3 bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold rounded-xl transition-colors text-sm group">
+              Log Water <ChevronRight className="h-4 w-4 ml-1 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
+
+          {/* Quick Actions Panel */}
+          <div className="md:col-span-3 lg:col-span-1 flex flex-col gap-4">
+            <h2 className="text-xl font-bold text-gray-800 mb-2 px-2">Quick Tools</h2>
+            
+            <Link to="/diet-planner" className="bg-gradient-to-r from-emerald-500 to-teal-500 p-5 rounded-2xl text-white shadow-lg shadow-emerald-500/20 hover:scale-[1.02] transition-transform flex items-center justify-between group">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/20 rounded-xl"><Apple className="h-6 w-6" /></div>
+                <div>
+                  <h3 className="font-bold text-lg">Diet Planner</h3>
+                  <p className="text-emerald-100 text-sm">Log your meals</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </Link>
+
+            <Link to="/exercise-videos" className="bg-gradient-to-r from-purple-500 to-indigo-500 p-5 rounded-2xl text-white shadow-lg shadow-purple-500/20 hover:scale-[1.02] transition-transform flex items-center justify-between group">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-white/20 rounded-xl"><Activity className="h-6 w-6" /></div>
+                <div>
+                  <h3 className="font-bold text-lg">Workouts</h3>
+                  <p className="text-purple-100 text-sm">Start your routine</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </Link>
+
+            <Link to="/medicalInformation" className="bg-white border-2 border-gray-100 p-5 rounded-2xl text-gray-800 shadow-sm hover:border-blue-200 transition-colors flex items-center justify-between group">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-gray-100 text-gray-600 rounded-xl group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors"><Scale className="h-6 w-6" /></div>
+                <div>
+                  <h3 className="font-bold text-lg">Body Metrics</h3>
+                  <p className="text-gray-500 text-sm">Update your weight</p>
+                </div>
+              </div>
+              <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+            </Link>
+          </div>
+
         </div>
-      </div>
+      </section>
     </div>
   );
-};
-
-export default Dashboard;
+}

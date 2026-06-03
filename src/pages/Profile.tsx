@@ -22,6 +22,44 @@ import { useNavigate } from 'react-router-dom';
 import { profileService, exerciseService, nutritionService, waterService } from '../services/dashboardService';
 import { useAuth } from '../context/AuthContext';
 
+// --- TYPESCRIPT INTERFACES ---
+interface HealthMetric {
+  value: string;
+  date: string;
+}
+
+interface Goal {
+  title: string;
+  progress: number;
+  target: string;
+  current: string;
+}
+
+interface ProfileApiResponse {
+  name?: string;
+  email?: string;
+  phone?: string;
+  birthdate?: string;
+  emergencyContact?: string;
+  diagnosisDate?: string;
+  diabetesType?: string;
+  height?: number | string;
+  weight?: number | string;
+  age?: number;
+  gender?: string;
+  primaryDoctor?: string;
+  nextAppointment?: string;
+  allergies?: string[];
+  dailyWaterGoal?: number;
+  dailyCarbohydrateGoal?: number;
+  dailyProteinGoal?: number;
+  dailyExerciseGoal?: number;
+  healthMetrics?: Record<string, HealthMetric>;
+  whatsappEnabled?: boolean;
+  phoneNumber?: string;
+  reminderTime?: string;
+}
+
 const ProfilePage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -33,6 +71,11 @@ const ProfilePage = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [newAllergy, setNewAllergy] = useState('');
   
+  // WhatsApp State
+  const [whatsappEnabled, setWhatsappEnabled] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [reminderTime, setReminderTime] = useState('08:00');
+
   const quotes = [
     {
       text: "Diabetes is not a choice, but how you manage it is. Every healthy decision is an investment in your tomorrow.",
@@ -57,38 +100,27 @@ const ProfilePage = () => {
   ];
 
   const [profileData, setProfileData] = useState({
-    // User identity
     name: "",
     email: "",
-    
-    // Contact information
     phone: "",
     birthdate: "",
     emergencyContact: "",
-    
-    // Personal information
     diagnosisDate: "",
     diabetesType: "",
     height: 170,
     weight: 70,
     age: 30,
     gender: "other",
-    
-    // Medical information
     primaryDoctor: "",
     nextAppointment: "",
     allergies: [] as string[],
-    
-    // Health metrics
     healthMetrics: {
       a1c: { value: "", date: "" },
       bloodPressure: { value: "", date: "" },
       weight: { value: "", date: "" },
       cholesterol: { value: "", date: "" }
-    },
-    
-    // Health goals
-    goals: [] as any[],
+    } as Record<string, HealthMetric>,
+    goals: [] as Goal[],
     dailyWaterGoal: 2.0,
     dailyCarbohydrateGoal: 150,
     dailyProteinGoal: 80,
@@ -97,7 +129,6 @@ const ProfilePage = () => {
 
   useEffect(() => {
     fetchProfileData();
-    
     const savedTheme = localStorage.getItem('darkMode');
     if (savedTheme) {
       setDarkMode(savedTheme === 'true');
@@ -108,7 +139,6 @@ const ProfilePage = () => {
     const quoteInterval = setInterval(() => {
       setCurrentQuote(prevQuote => (prevQuote + 1) % quotes.length);
     }, 8000);
-    
     return () => clearInterval(quoteInterval);
   }, []);
 
@@ -126,21 +156,24 @@ const ProfilePage = () => {
       console.log('Fetching profile data from MongoDB');
       setError(null);
       
-      const data = await profileService.getProfile();
+      // APPLYING THE BLUEPRINT FIX HERE
+      const data = (await profileService.getProfile()) as ProfileApiResponse;
       console.log('Profile data received from MongoDB:', data);
       
-      // If data is null or undefined, display error
       if (!data) {
         console.error('No profile data received from backend');
         setError('Failed to load profile data from database. Please try again.');
         return;
       }
+
+      // Set WhatsApp settings from database
+      setWhatsappEnabled(data.whatsappEnabled || false);
+      setPhoneNumber(data.phoneNumber || "");
+      setReminderTime(data.reminderTime || "08:00");
       
-      // Fetch additional data from other services
       let exerciseData;
       try {
         exerciseData = await exerciseService.getTodayExercise();
-        console.log('Exercise data for profile:', exerciseData);
       } catch (err) {
         console.error('Failed to fetch exercise data for profile:', err);
         exerciseData = { totalDuration: 0, totalCaloriesBurned: 0 };
@@ -149,7 +182,6 @@ const ProfilePage = () => {
       let waterData;
       try {
         waterData = await waterService.getTodayWaterIntake();
-        console.log('Water data for profile:', waterData);
       } catch (err) {
         console.error('Failed to fetch water data for profile:', err);
         waterData = { totalWaterIntake: 0, dailyWaterGoal: 2000 };
@@ -158,54 +190,39 @@ const ProfilePage = () => {
       let nutritionData;
       try {
         nutritionData = await nutritionService.getTodayNutrition();
-        console.log('Nutrition data for profile:', nutritionData);
       } catch (err) {
         console.error('Failed to fetch nutrition data for profile:', err);
         nutritionData = { totalCalories: 0, totalCarbs: 0, totalProtein: 0 };
       }
       
-      // Convert ml to L for water
       const waterLiters = ((waterData.totalWaterIntake || 0) / 1000) || 0;
-      const waterGoalLiters = ((waterData.dailyWaterGoal || 2000) / 1000) || 2.0;
+      const waterGoalLiters = ((data.dailyWaterGoal || 2000) / 1000) || 2.0;
       
-      // Normalize diabetes type to ensure capitalization is correct
       let diabetesType = data.diabetesType || "Type 2";
-      // Capitalize "none" to "None" to match backend enum
       if (diabetesType.toLowerCase() === "none") {
         diabetesType = "None";
       }
       
       setProfileData(prevData => ({
         ...prevData,
-        // User identity info - Use MongoDB data first, fallback to Auth context
         name: user?.name || "User",
         email: user?.email || "",
-        
-        // Physical attributes - Use MongoDB data with fallbacks
-        height: data.height || 170,
-        weight: data.weight || 70,
-        age: data.age || 30,
+        height: Number(data.height) || 170,
+        weight: Number(data.weight) || 70,
+        age: Number(data.age) || 30,
         gender: data.gender || "other",
         diabetesType: diabetesType,
-        
-        // Contact information
         phone: data.phone || "",
         birthdate: data.birthdate || "",
         emergencyContact: data.emergencyContact || "",
-        
-        // Goals
         dailyWaterGoal: data.dailyWaterGoal || waterGoalLiters,
         dailyCarbohydrateGoal: data.dailyCarbohydrateGoal || 150,
         dailyProteinGoal: data.dailyProteinGoal || 80,
         dailyExerciseGoal: data.dailyExerciseGoal || 30,
-        
-        // Medical information
         primaryDoctor: data.primaryDoctor || "",
         nextAppointment: data.nextAppointment || "",
         allergies: data.allergies || [],
         diagnosisDate: data.diagnosisDate || "",
-        
-        // Health metrics - Use MongoDB data with fallbacks
         healthMetrics: data.healthMetrics || {
           a1c: { 
             value: "6.5%", 
@@ -224,8 +241,6 @@ const ProfilePage = () => {
             date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
           }
         },
-        
-        // Goals formatted for UI display with real progress
         goals: [
           { 
             title: `Daily Water Goal: ${data.dailyWaterGoal || waterGoalLiters}L`, 
@@ -272,45 +287,32 @@ const ProfilePage = () => {
       setIsSaving(true);
       setError(null);
       
-      console.log('Saving profile changes to MongoDB:', profileData);
-      
-      // Format data for API
       const profileDataToSave = {
-        // Physical attributes
         height: profileData.height,
         weight: profileData.weight,
         age: profileData.age,
         gender: profileData.gender,
-        // Fix the case for diabetesType to match the enum on the backend
         diabetesType: profileData.diabetesType === "none" ? "None" : profileData.diabetesType,
         diagnosisDate: profileData.diagnosisDate,
-        
-        // Contact information
         phone: profileData.phone,
         birthdate: profileData.birthdate,
         emergencyContact: profileData.emergencyContact,
-        
-        // Medical information
         primaryDoctor: profileData.primaryDoctor,
         nextAppointment: profileData.nextAppointment,
         allergies: profileData.allergies,
-        
-        // Goals
         dailyWaterGoal: profileData.dailyWaterGoal,
         dailyCarbohydrateGoal: profileData.dailyCarbohydrateGoal,
         dailyProteinGoal: profileData.dailyProteinGoal,
         dailyExerciseGoal: profileData.dailyExerciseGoal,
-        
-        // Health metrics
-        healthMetrics: profileData.healthMetrics
+        healthMetrics: profileData.healthMetrics,
+        // NEW: Sending WhatsApp Settings to Database
+        whatsappEnabled,
+        phoneNumber,
+        reminderTime
       };
       
-      console.log('Sending profile data to backend:', profileDataToSave);
       const result = await profileService.updateProfile(profileDataToSave);
-      console.log('Profile update result:', result);
       
-      // The backend returns the updated profile object, not a success field
-      // So we just need to check if the result exists
       if (!result) {
         throw new Error('Failed to update profile - no response from server');
       }
@@ -319,7 +321,6 @@ const ProfilePage = () => {
       setTimeout(() => setSuccess(null), 3000);
       setIsEditing(false);
       
-      // Refetch profile data to ensure we have the latest
       await fetchProfileData();
     } catch (err) {
       console.error('Error saving profile changes:', err);
@@ -329,23 +330,20 @@ const ProfilePage = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: any) => {
+  // Fixed 'any' type here
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setProfileData(prevData => {
       const newData = {
         ...prevData,
         [field]: value
       };
       
-      // Synchronize weight value with health metrics when weight field changes
       if (field === 'weight') {
-        // Update both the value and date in the weight metric
         const today = new Date().toLocaleDateString('en-US', { 
           month: 'long', 
           day: 'numeric', 
           year: 'numeric' 
         });
-        
-        console.log(`Updating weight metric to ${value} kg, date: ${today}`);
         
         newData.healthMetrics = {
           ...newData.healthMetrics,
@@ -356,7 +354,6 @@ const ProfilePage = () => {
           }
         };
       }
-      
       return newData;
     });
   };
@@ -367,7 +364,7 @@ const ProfilePage = () => {
       healthMetrics: {
         ...prevData.healthMetrics,
         [metricKey]: {
-          ...prevData.healthMetrics[metricKey as keyof typeof prevData.healthMetrics],
+          ...prevData.healthMetrics[metricKey],
           [field]: value
         }
       }
@@ -396,12 +393,8 @@ const ProfilePage = () => {
     setDarkMode(!darkMode);
   };
 
-  // Handle date input changes specifically
   const handleDateInputChange = (field: string, value: string, metricType?: string) => {
-    console.log(`Changing date field: ${field} to ${value}`);
-    
     if (metricType) {
-      // For health metrics dates
       setProfileData(prev => ({
         ...prev,
         healthMetrics: {
@@ -413,7 +406,6 @@ const ProfilePage = () => {
         }
       }));
     } else {
-      // For regular date fields
       setProfileData(prev => ({
         ...prev,
         [field]: value
@@ -421,42 +413,19 @@ const ProfilePage = () => {
     }
   };
 
-  // Format dates for display
   const formatDateForDisplay = (dateString: string) => {
     if (!dateString) return '';
-    
     try {
-      // Check if it's already in a readable format
       if (dateString.includes(',')) return dateString;
-      
-      // Try to parse ISO date
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return dateString; // Not a valid date
-      
+      if (isNaN(date.getTime())) return dateString; 
       return date.toLocaleDateString('en-US', { 
         month: 'long', 
         day: 'numeric', 
         year: 'numeric' 
       });
-    } catch (err) {
-      console.error('Error formatting date:', err);
+   } catch {
       return dateString;
-    }
-  };
-
-  // Format dates for input fields
-  const formatDateForInput = (dateString: string) => {
-    if (!dateString) return '';
-    
-    try {
-      // Check if it's in a readable format and convert to yyyy-mm-dd
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) return ''; // Not a valid date
-      
-      return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
-    } catch (err) {
-      console.error('Error formatting date for input:', err);
-      return '';
     }
   };
 
@@ -681,21 +650,21 @@ const ProfilePage = () => {
                   
                   <div className="space-y-4">
                     {Object.entries(profileData.healthMetrics).map(([key, data]) => (
-                        <div key={key} className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'} mb-3`}>
-  <div className="flex justify-between items-center mb-1">
-    <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                      <div key={key} className={`p-3 rounded-lg ${darkMode ? 'bg-gray-700' : 'bg-blue-50'} mb-3`}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
                           {isEditing ? (
                             <input
                               type="date"
                               value={data.date}
-                              onChange={(e) => handleDateInputChange(key, e.target.value, key.split(': ')[0])}
+                              onChange={(e) => handleDateInputChange(key, e.target.value, key)}
                               className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-gray-600 text-white' : 'bg-white text-gray-800'}`}
                             />
                           ) : (
-    <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatDateForDisplay(data.date)}</span>
+                            <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{formatDateForDisplay(data.date)}</span>
                           )}
-  </div>
-  <div className="flex items-end">
+                        </div>
+                        <div className="flex items-end">
                           {isEditing ? (
                             <input
                               type="text"
@@ -704,11 +673,11 @@ const ProfilePage = () => {
                               className={`w-full text-lg font-semibold px-2 py-1 rounded ${darkMode ? 'bg-gray-600 text-white' : 'bg-white text-gray-800'}`}
                             />
                           ) : (
-    <span className="text-lg font-semibold">{data.value}</span>
+                            <span className="text-lg font-semibold">{data.value}</span>
                           )}
-  </div>
-</div>
-))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
                 
@@ -740,10 +709,10 @@ const ProfilePage = () => {
                         className={`w-full font-medium mt-1 px-2 py-1 rounded ${darkMode ? 'bg-gray-600 text-white' : 'bg-white text-gray-800'}`}
                       />
                     ) : (
-                    <div className="font-medium flex items-center">
-                      <Clock size={16} className="mr-1" />
+                      <div className="font-medium flex items-center">
+                        <Clock size={16} className="mr-1" />
                         {profileData.nextAppointment || 'No upcoming appointments'}
-                    </div>
+                      </div>
                     )}
                   </div>
                   
@@ -787,8 +756,8 @@ const ProfilePage = () => {
                             className={`px-2 py-1 rounded text-xs ml-2 ${
                               darkMode ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-600'
                             } flex items-center`}
-                        >
-                          <PlusCircle size={12} className="mr-1" /> Add
+                          >
+                            <PlusCircle size={12} className="mr-1" /> Add
                           </button>
                         </form>
                       )}
@@ -798,7 +767,7 @@ const ProfilePage = () => {
               </div>
             </div>
             
-            <div className={`rounded-xl shadow-sm p-6 transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+            <div className={`rounded-xl shadow-sm p-6 mb-6 transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-lg font-semibold flex items-center">
                   <Award size={20} className={darkMode ? 'text-blue-400 mr-2' : 'text-blue-500 mr-2'} />
@@ -891,6 +860,54 @@ const ProfilePage = () => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            {/* Automated Reminders Card - Now Wired to Save! */}
+            <div className={`rounded-xl shadow-sm p-6 transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-lg font-semibold flex items-center">
+                  <Phone size={20} className={darkMode ? 'text-blue-400 mr-2' : 'text-blue-500 mr-2'} />
+                  Automated Reminders
+                </h3>
+              </div>
+              
+              <label className="flex items-center space-x-3 mb-4 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  className="form-checkbox h-5 w-5 text-blue-600"
+                  checked={whatsappEnabled} 
+                  onChange={(e) => setWhatsappEnabled(e.target.checked)} 
+                  disabled={!isEditing}
+                />
+                <span className={`font-medium ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>Enable WhatsApp Alerts</span>
+              </label>
+              
+              {whatsappEnabled && (
+                <div className={`flex flex-col space-y-3 mt-3 pl-8 border-l-2 ${darkMode ? 'border-blue-800' : 'border-blue-200'}`}>
+                  <div>
+                    <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>WhatsApp Number (with country code)</label>
+                    <input 
+                      type="text" 
+                      placeholder="+919876543210" 
+                      className={`w-full p-2 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} ${!isEditing && 'opacity-70'}`}
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className={`block text-sm mb-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Daily Reminder Time</label>
+                    <input 
+                      type="time" 
+                      className={`w-full p-2 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-800'} ${!isEditing && 'opacity-70'}`}
+                      value={reminderTime}
+                      onChange={(e) => setReminderTime(e.target.value)}
+                      disabled={!isEditing}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

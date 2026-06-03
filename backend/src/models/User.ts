@@ -1,58 +1,25 @@
-import mongoose, { Document } from 'mongoose';
-import bcrypt from 'bcryptjs';
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IUser extends Document {
   name: string;
   email: string;
-  password: string;
-  comparePassword(candidatePassword: string): Promise<boolean>;
+  password?: string;
+  phoneNumber?: string;
+  whatsappEnabled: boolean;
+  reminderTime: string; // Format "HH:00"
+  dailyWaterGoal: number;
+  dailyStepsGoal: number;
 }
 
-const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Please provide a name'],
-    trim: true,
-  },
-  email: {
-    type: String,
-    required: [true, 'Please provide an email'],
-    unique: true,
-    trim: true,
-    lowercase: true,
-    match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
-  },
-  password: {
-    type: String,
-    required: [true, 'Please provide a password'],
-    minlength: 6,
-    select: false,
-  },
-}, {
-  timestamps: true,
-  collection: 'users'
-});
+const userSchema = new Schema<IUser>({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  phoneNumber: { type: String, default: "" },
+  whatsappEnabled: { type: Boolean, default: false },
+  reminderTime: { type: String, default: "08:00" },
+  dailyWaterGoal: { type: Number, default: 2000 },
+  dailyStepsGoal: { type: Number, default: 5000 },
+}, { timestamps: true });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
-  try {
-    return await bcrypt.compare(candidatePassword, this.password);
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const User = mongoose.model<IUser>('User', userSchema); 
+export const User = mongoose.model<IUser>('User', userSchema);

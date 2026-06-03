@@ -18,6 +18,9 @@ import NutritionTracker from './pages/NutritionTracker';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 
+// NEW: Import the SOS Button
+import SosButton from './components/SosButton';
+
 // Global Error Boundary
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -85,17 +88,18 @@ function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <div className="min-h-screen bg-gray-50 flex flex-col">
+        {/* Added 'relative' to ensure the absolute positioned SOS button maps correctly to the window */}
+        <div className="min-h-screen relative bg-gray-50 flex flex-col">
           <Header />
           <main className="flex-grow">
             <Routes>
-              {/* Public routes */}
+              {/* Public routes - Anyone can see these without logging in */}
               <Route path="/" element={<Home />} />
               <Route path="/signup" element={<SignUp />} />
               <Route path="/login" element={<Login />} />
               <Route path="/about-us" element={<AboutUs />} />
               
-              {/* Protected routes */}
+              {/* Protected routes - HIDDEN completely until user logs in */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -110,6 +114,11 @@ function App() {
             </Routes>
           </main>
           <Footer />
+
+          {/* THE GLOBAL SOS BUTTON */}
+          {/* Placed outside the Routes so it always floats on top of every page */}
+          <SosButton />
+
         </div>
       </AuthProvider>
     </ErrorBoundary>

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">DiaFit</string>
+    <string name="title_activity_main">DiaFit</string>
+    <string name="package_name">com.syed.diafit</string>
+    <string name="custom_url_scheme">com.syed.diafit</string>
+</resources>
