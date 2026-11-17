@@ -1,113 +1,94 @@
-# DiaFit - AI-Powered Diabetes Management Assistant
+# DIAFIT 🩺
 
-DiaFit is a comprehensive web application designed to help individuals manage diabetes through personalized health tracking, nutritional guidance, and an AI-powered assistant.
+**A multi-role diabetes care coordination platform for elderly and dependent patients.**
 
-![DiaFit App](https://via.placeholder.com/800x400?text=DiaFit+App)
+🔗 **Live demo:** [diafit-theta.vercel.app](https://diafit-theta.vercel.app)
 
-## Features
+![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=nodedotjs&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat&logo=mongodb&logoColor=white)
+![Twilio](https://img.shields.io/badge/Twilio-F22F46?style=flat&logo=twilio&logoColor=white)
+![Capacitor](https://img.shields.io/badge/Capacitor-119EFF?style=flat&logo=capacitor&logoColor=white)
 
-- **AI Assistant**: Intelligent conversational interface to answer questions about diabetes management, nutrition, exercise, and healthy living
-- **Speech-to-Text**: Voice input for natural interaction with the AI assistant
-- **Text-to-Speech**: Voice responses from the AI assistant with female voice
-- **Health Profile**: Personalized health information tracking
-- **Medical Information**: Management of diabetes-related medical data
+## 💡 The problem
 
-## Tech Stack
+In many Indian households, diabetes care for an elderly patient is shared between a local caregiver, a family member living in another city, and a doctor consulted now and then. This coordination usually happens over calls and messages, with no shared record, no accountability trail, and no structured way to spot a missed dose or an abnormal reading early.
 
-- **Frontend**: React with TypeScript
-- **UI**: Tailwind CSS for responsive design
-- **Icons**: Lucide React icons
-- **Voice Features**: Web Speech API and SpeechRecognition
-- **AI Integration**: Integration with AI models for diabetes management assistance
+DIAFIT treats this as a **coordination problem, not a single-user logging problem**.
 
-## Getting Started
+## ✨ Features
+
+- **Role-based access:** Patient, caregiver, family coordinator, doctor and admin, each with their own views and permissions
+- **Care team management:** Approved access grants between patients and their care team
+- **Care alerts:** Alerts for abnormal readings, with optional WhatsApp notifications (explicit opt-in)
+- **SOS button:** One-tap emergency alert with Twilio integration
+- **Care logs and audit trail:** A record of who logged or changed what
+- **Clinical report:** A consolidated report for doctor consultations
+- **Diet planner and nutrition tracker**
+- **Exercise tracker with videos**
+- **Streak badges** to encourage consistency
+- **AI assistant** page
+- **Android app** built with Capacitor
+
+## 🏗 Tech stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React, TypeScript, Vite, Tailwind CSS |
+| Mobile | Capacitor (Android) |
+| Backend | Node.js, TypeScript |
+| Databases | PostgreSQL (identities, roles, care data) and MongoDB (nutrition, exercise, diet plans) |
+| Messaging | Twilio (WhatsApp and emergency alerts) |
+| Hosting | Vercel (frontend) |
+
+## 🚀 Getting started
 
 ### Prerequisites
+- Node.js 18+
+- PostgreSQL and MongoDB
+- A Twilio account (optional, only for WhatsApp alerts)
 
-- Node.js (v14 or higher)
-- npm or yarn
+### Setup
 
-### Installation
+```bash
+git clone https://github.com/Syed110110/DIAFIT.git
+cd DIAFIT
 
-1. Clone the repository
-   ```
-   git clone https://github.com/yourusername/diafit.git
-   cd diafit
-   ```
+# Frontend
+cp .env.example .env
+npm install
+npm run dev
 
-2. Install dependencies
-   ```
-   npm install
-   ```
-   or
-   ```
-   yarn install
-   ```
-
-3. Start the development server
-   ```
-   npm run dev
-   ```
-   or
-   ```
-   yarn dev
-   ```
-
-4. Open your browser and navigate to http://localhost:5173
-
-## Project Structure
-
-```
-diafit/
-├── public/              # Public assets
-├── src/                 # Source code
-│   ├── components/      # Reusable UI components
-│   │   ├── AiAssistant.tsx     # AI chat assistant
-│   │   └── ...
-│   ├── pages/           # Application pages
-│   │   ├── AiAssistant.tsx     # AI chat assistant
-│   │   └── ...
-│   ├── services/        # Service layer for API interactions
-│   │   ├── aiService.ts        # AI service integration
-│   │   └── ...
-│   ├── App.tsx          # Main application component
-│   └── main.tsx         # Application entry point
-├── .gitignore           # Git ignore file
-├── package.json         # Project dependencies
-├── tsconfig.json        # TypeScript configuration
-└── README.md            # Project documentation
+# Backend
+cd backend
+cp .env.example .env     # fill in your own values
+npm install
+npm run db:migrate
+npm run dev
 ```
 
-## Key Features Explained
+See [`backend/CAPSTONE_AUTH_SETUP.md`](backend/CAPSTONE_AUTH_SETUP.md) for the full authentication and database setup.
 
-### AI Assistant
-The AI Assistant provides a conversational interface where users can ask questions about diabetes management, nutrition, exercise plans, and general health advice. The assistant processes natural language queries and returns informative responses based on current medical knowledge.
+## 📸 Screenshots
 
-### Voice Functionality
-- **Speech-to-Text**: Users can speak directly to the application, which converts speech to text in real-time
-- **Text-to-Speech**: The AI assistant can read responses aloud using a natural-sounding female voice
+<!-- Add 4-5 screenshots here, e.g. -->
+<!-- ![Dashboard](docs/screenshots/dashboard.png) -->
 
-### Health Profile
-Users can input and track key health metrics relevant to diabetes management, including:
-- Blood glucose levels
-- Weight and BMI
-- Exercise activity
-- Dietary information
-- Medication schedules
+## 🗺 Roadmap
 
-## Contributing
+- [ ] Adherence-risk prediction model (scikit-learn)
+- [ ] Voice-based logging for low-literacy caregivers
+- [ ] Premium family tier (payment sandbox)
+- [ ] Wider automated test coverage
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## 📚 Documentation
 
-## License
+- [Architecture](DiaFit-Architecture.md)
+- [Project structure](DiaFit-Project-Structure.pdf.md)
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 👤 Author
 
-## Acknowledgments
-
-- Thanks to all contributors who have helped build and improve DiaFit
-- Special thanks to the open source community for providing the tools that made this project possible 
+**Syed Mohd Mehdi** · MCA final-year student
+[LinkedIn](https://www.linkedin.com/in/syed-mohd-mehdi-b69536238) · mohdsyed110110@gmail.com
