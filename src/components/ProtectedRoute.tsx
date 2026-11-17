@@ -4,10 +4,12 @@ import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
   redirectPath?: string;
+  allowedRoles?: Array<'PATIENT' | 'CAREGIVER' | 'FAMILY_COORDINATOR' | 'DOCTOR' | 'ADMIN'>;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  redirectPath = '/login' 
+  redirectPath = '/login',
+  allowedRoles,
 }) => {
   const { user, loading, error, isAuthenticated } = useAuth();
   const location = useLocation();
@@ -44,6 +46,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   if (!user || !isAuthenticated()) {
     // Save the location they were trying to go to
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
+  }
+
+  if (allowedRoles && !user.role) {
+    return <Navigate to={redirectPath} replace />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to={user.role === 'ADMIN' ? '/admin/users' : '/dashboard'} replace />;
   }
 
   // If they are authenticated, render the protected content

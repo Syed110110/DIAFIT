@@ -5,33 +5,39 @@ export const updateActivityStreak = async (userId: string): Promise<void> => {
     const user = await User.findById(userId);
     if (!user) return;
 
-    const todayStr = new Date().toLocaleDateString('en-CA'); 
-    
-    if (user.lastActivityDate) {
-      if (user.lastActivityDate === todayStr) {
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    const yesterdayStr = new Date(today.getTime() - 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+    const streakData = user.streakData ?? {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastGoalMetDate: null,
+    };
+
+    if (streakData.lastGoalMetDate) {
+      if (streakData.lastGoalMetDate === todayStr) {
         return;
       }
 
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayStr = yesterday.toLocaleDateString('en-CA');
-
-      if (user.lastActivityDate === yesterdayStr) {
-        user.currentStreak += 1;
+      if (streakData.lastGoalMetDate === yesterdayStr) {
+        streakData.currentStreak += 1;
       } else {
-        user.currentStreak = 1;
+        streakData.currentStreak = 1;
       }
     } else {
-      user.currentStreak = 1;
+      streakData.currentStreak = 1;
     }
 
-    if (user.currentStreak > user.highestStreak) {
-      user.highestStreak = user.currentStreak;
+    if (streakData.currentStreak > streakData.longestStreak) {
+      streakData.longestStreak = streakData.currentStreak;
     }
 
-    user.lastActivityDate = todayStr;
+    streakData.lastGoalMetDate = todayStr;
+    user.streakData = streakData;
     await user.save();
-    console.log(`🔥 Streak updated: Current = ${user.currentStreak}`);
+    console.log(`Streak updated: Current = ${streakData.currentStreak}`);
   } catch (error) {
     console.error("Streak computation error:", error);
   }

@@ -32,27 +32,28 @@ const SignUp = () => {
     try {
       await register(formData.name, formData.email, formData.password);
       navigate('/dashboard');
-    } catch (err: any) {
-      setSignupError(err.response?.data?.message || 'Registration failed');
+    } catch (err: unknown) {
+      setSignupError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <div className="max-w-4xl w-full bg-white rounded-2xl shadow-xl flex overflow-hidden">
-        <div className="w-1/2 p-8 bg-gradient-to-br from-blue-600 to-purple-600 text-white flex flex-col justify-center">
-          <h1 className="text-4xl font-bold mb-6">Welcome to DiaFit</h1>
-          <p className="text-lg mb-4">Your personal diabetes management companion</p>
+    <div className="dia-auth-page flex min-h-screen items-center justify-center p-4 sm:p-6">
+      <div className="dia-auth-card flex w-full max-w-5xl flex-col md:flex-row">
+        <div className="dia-auth-aside flex w-full flex-col justify-center gap-5 p-7 text-white sm:p-10 md:w-1/2">
+          <p className="dia-auth-kicker">DiaFit / Daily care coordination</p>
+          <h1 className="mb-0 text-4xl font-semibold">A little more connected.</h1>
+          <p className="mb-1 max-w-md text-lg text-white/75">A shared, accountable record for the people who help with everyday care.</p>
           <img 
             src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&q=80"
             alt="Health Monitoring"
-            className="rounded-lg shadow-lg"
+            className="dia-auth-image"
           />
         </div>
 
-        <div className="w-1/2 p-8">
+        <div className="dia-auth-form w-full p-7 sm:p-10 md:w-1/2">
           <form onSubmit={handleSubmit} className="space-y-4">
             <h2 className="text-2xl font-bold mb-6">Create Your Account</h2>
             
@@ -66,7 +67,7 @@ const SignUp = () => {
               <label className="block text-sm font-medium text-gray-700">Name</label>
               <input
                 type="text"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                className="mt-1 block w-full shadow-sm focus:border-emerald-700 focus:ring focus:ring-emerald-100"
                 value={formData.name}
                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                 required
@@ -77,7 +78,7 @@ const SignUp = () => {
               <label className="block text-sm font-medium text-gray-700">Email</label>
               <input
                 type="email"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                className="mt-1 block w-full shadow-sm focus:border-emerald-700 focus:ring focus:ring-emerald-100"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
                 required
@@ -88,16 +89,16 @@ const SignUp = () => {
               <label className="block text-sm font-medium text-gray-700">Password</label>
               <input
                 type="password"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                className="mt-1 block w-full shadow-sm focus:border-emerald-700 focus:ring focus:ring-emerald-100"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                 required
               />
             </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg mt-6">
+            <div className="mt-6 rounded-lg border border-[var(--dia-line)] bg-[#f7f9f5] p-4">
               <div className="flex items-center gap-2 mb-4">
-                <Calculator className="w-5 h-5 text-blue-600" />
+                <Calculator className="w-5 h-5 text-emerald-800" />
                 <h3 className="text-lg font-semibold">BMI Calculator</h3>
               </div>
               
@@ -106,7 +107,7 @@ const SignUp = () => {
                   <label className="block text-sm font-medium text-gray-700">Height (cm)</label>
                   <input
                     type="number"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                    className="mt-1 block w-full shadow-sm focus:border-emerald-700 focus:ring focus:ring-emerald-100"
                     value={formData.height}
                     onChange={(e) => setFormData({...formData, height: e.target.value})}
                   />
@@ -115,7 +116,7 @@ const SignUp = () => {
                   <label className="block text-sm font-medium text-gray-700">Weight (kg)</label>
                   <input
                     type="number"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                    className="mt-1 block w-full shadow-sm focus:border-emerald-700 focus:ring focus:ring-emerald-100"
                     value={formData.weight}
                     onChange={(e) => setFormData({...formData, weight: e.target.value})}
                   />
@@ -125,7 +126,7 @@ const SignUp = () => {
               <button
                 type="button"
                 onClick={calculateBMI}
-                className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors"
+                className="dia-primary-button mt-4 w-full px-4 py-2"
               >
                 Calculate BMI
               </button>
@@ -145,7 +146,7 @@ const SignUp = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="mt-6 w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-md hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center justify-center gap-2"
+              className="dia-primary-button mt-6 flex w-full items-center justify-center gap-2 px-4 py-3"
             >
               {isLoading ? 'Creating Account...' : (
                 <>
@@ -157,7 +158,7 @@ const SignUp = () => {
             
             <p className="text-center text-sm text-gray-600 mt-4">
               Already have an account?{' '}
-              <Link to="/login" className="text-blue-600 hover:text-blue-500 font-medium">
+              <Link to="/login" className="font-medium text-emerald-800 hover:text-emerald-950">
                 Sign in
               </Link>
             </p>

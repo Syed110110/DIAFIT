@@ -4,11 +4,16 @@
   "main": "dist/server.js",
   "scripts": {
     "start": "node dist/server.js",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "test-db": "ts-node src/test-connection.ts",
-    "migrate-data": "ts-node src/data-migration.ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "db:migrate": "node-pg-migrate up --envPath .env",
+    "db:rollback": "node-pg-migrate down --envPath .env",
+    "db:import-mongo-users": "tsx src/migrateMongoUsers.ts",
+    "db:seed-admin": "tsx src/seedAdmin.ts",
+    "db:seed-demo-family": "tsx src/seedDemoFamily.ts",
+    "test-db": "tsx src/test-connection.ts",
+    "migrate-data": "tsx src/data-migration.ts",
+    "test": "npm run build && node --test test/*.test.cjs"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +27,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.24.0",
     "node-cron": "^4.2.1",
+    "pg": "^8.23.1",
     "twilio": "^6.0.2"
   },
   "devDependencies": {
@@ -31,7 +37,12 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/node": "^20.19.41",
     "@types/node-cron": "^3.0.11",
-    "ts-node-dev": "^2.0.0",
+    "@types/pg": "^8.23.1",
+    "node-pg-migrate": "^9.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.3.3"
+  },
+  "overrides": {
+    "qs": "^6.16.0"
   }
 }

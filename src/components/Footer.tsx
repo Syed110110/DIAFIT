@@ -4,13 +4,13 @@ import { Link } from 'react-router-dom';
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer className="bg-[var(--dia-ink)] text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center">
-              <Activity className="h-8 w-8 text-blue-400" />
+              <Activity className="h-8 w-8 text-[var(--dia-lime)]" />
               <span className="ml-2 text-2xl font-bold">DiaFit</span>
             </div>
             <p className="text-gray-400">
@@ -66,11 +66,11 @@ const Footer = () => {
               </li>
               <li className="flex items-center text-gray-400">
                 <Phone className="h-5 w-5 mr-2" />
-                +91 955-123-4567
+                +91 86047 25119
               </li>
               <li className="flex items-center text-gray-400">
                 <MapPin className="h-5 w-5 mr-2" />
-                123 Health Street, St Joseph's Univrersity
+                PES University, Bengaluru
               </li>
             </ul>
           </div>

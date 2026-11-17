@@ -1,11 +1,12 @@
 import { Request, Response } from 'express';
 import { WaterEntry } from '../models/WaterTracker';
 import { Profile } from '../models/Profile';
+import { updateActivityStreak } from './streakService';
 
 // Add water intake
 export const addWaterIntake = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     const { amount } = req.body; // amount in milliliters
     
     console.log(`Adding water intake: ${amount}ml for user: ${userId}`);
@@ -29,6 +30,7 @@ export const addWaterIntake = async (req: Request, res: Response) => {
     console.log('Saving water entry:', JSON.stringify(waterEntry));
     const savedEntry = await waterEntry.save();
     console.log('Water entry saved successfully:', savedEntry._id);
+    await updateActivityStreak(userId.toString());
     
     res.status(201).json(savedEntry);
   } catch (error) {
@@ -40,7 +42,7 @@ export const addWaterIntake = async (req: Request, res: Response) => {
 // Get today's water intake
 export const getTodayWaterIntake = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     console.log(`Getting today's water intake for user: ${userId}`);
     
     if (!userId) {
@@ -88,7 +90,7 @@ export const getTodayWaterIntake = async (req: Request, res: Response) => {
 // Delete water entry
 export const deleteWaterEntry = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     const { entryId } = req.params;
     
     console.log(`Deleting water entry: ${entryId} for user: ${userId}`);

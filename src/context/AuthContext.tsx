@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { authService } from '../services/api';
 import { ApiError } from '../services/api';
 
@@ -8,6 +8,7 @@ interface User {
   name: string;
   email: string;
   token: string;
+  role: 'PATIENT' | 'CAREGIVER' | 'FAMILY_COORDINATOR' | 'DOCTOR' | 'ADMIN';
 }
 
 // Auth context type definition
@@ -27,29 +28,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Provider component
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(() => authService.getCurrentUser());
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Check if user is already logged in
-  useEffect(() => {
-    const initializeAuth = () => {
-      try {
-        const user = authService.getCurrentUser();
-        if (user) {
-          setUser(user);
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error);
-        // If there's an error getting the current user, clear local storage
-        authService.logout();
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-  }, []);
 
   // Login function
   const login = async (email: string, password: string) => {

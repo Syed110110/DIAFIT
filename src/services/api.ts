@@ -1,7 +1,10 @@
-import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosResponse } from 'axios';
 
-// API base URL - hardcoded to localhost since process.env is causing errors in the browser
-const API_URL = 'https://diafit-j318.onrender.com/api';
+const API_URL = import.meta.env.VITE_API_URL || (
+  import.meta.env.DEV
+    ? 'http://localhost:5000/api'
+    : 'https://diafit-j318.onrender.com/api'
+);
 
 // Custom error class for API errors
 export class ApiError extends Error {
@@ -36,6 +39,11 @@ api.interceptors.request.use(
       console.log(`API Request to ${config.url}: Token attached`);
     } else {
       console.warn(`API Request to ${config.url}: No token available`);
+    }
+
+    const patientId = localStorage.getItem('patientId');
+    if (patientId && config.headers) {
+      config.headers['X-Patient-Id'] = patientId;
     }
     
     return config;
@@ -106,6 +114,7 @@ export const authService = {
       const response = await api.post('/auth/signup', userData);
       if (response) {
         console.log('Registration successful, saving token and user data');
+        localStorage.removeItem('patientId');
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response));
       }
@@ -122,6 +131,7 @@ export const authService = {
       const response = await api.post('/auth/signin', userData);
       if (response) {
         console.log('Login successful, saving token and user data');
+        localStorage.removeItem('patientId');
         localStorage.setItem('token', response.token);
         localStorage.setItem('user', JSON.stringify(response));
       }
@@ -137,6 +147,7 @@ export const authService = {
     console.log('Logging out, removing token and user data');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('patientId');
   },
 
   // Get current user
@@ -164,6 +175,62 @@ export const authService = {
     console.log(`Authentication check: ${hasToken ? 'Authenticated' : 'Not authenticated'}`);
     return hasToken;
   }
+};
+
+export const adminService = {
+  createUser: async (userData: { name: string; email: string; password: string; role: string }) =>
+    api.post('/auth/users', userData),
+};
+
+export const patientAccessService = {
+  getAssignments: async () => api.get('/patients/assignments'),
+  getPatientAccess: async (patientId: string) => api.get(`/patients/${patientId}/access`),
+  requestAccess: async (patientId: string, memberEmail: string) =>
+    api.post(`/patients/${patientId}/access`, { memberEmail }),
+  approveAccess: async (patientId: string, memberId: string) =>
+    api.post(`/patients/${patientId}/access/${memberId}/approve`),
+  revokeAccess: async (patientId: string, memberId: string) =>
+    api.delete(`/patients/${patientId}/access/${memberId}`),
+};
+
+export const careDataService = {
+  getSettings: async () => api.get('/care/settings'),
+  updateSettings: async (settings: Record<string, number | null>) => api.put('/care/settings', settings),
+  getDoses: async () => api.get('/care/doses'),
+  scheduleDose: async (dose: { medicationName: string; scheduledFor: string; confirmed: true }) =>
+    api.post('/care/doses', dose),
+  logDose: async (occurrenceId: string, log: { takenAt: string; source: 'MANUAL'; notes: string; confirmed: true }) =>
+    api.post(`/care/doses/${occurrenceId}/logs`, log),
+  correctDose: async (occurrenceId: string, correction: { originalLogId: string; takenAt: string; notes: string; confirmed: true }) =>
+    api.post(`/care/doses/${occurrenceId}/corrections`, correction),
+  getConflicts: async () => api.get('/care/dose-conflicts'),
+  resolveConflict: async (conflictId: string, selectedLogId: string) =>
+    api.post(`/care/dose-conflicts/${conflictId}/resolve`, { selectedLogId, confirmed: true }),
+  getGlucoseReadings: async () => api.get('/care/glucose'),
+  logGlucose: async (reading: { valueMgDl: number; context: string; measuredAt: string; source: 'MANUAL'; notes: string; confirmed: true }) =>
+    api.post('/care/glucose', reading),
+};
+
+export const careAlertService = {
+  getAlerts: async () => api.get('/care/alerts'),
+  getInbox: async () => api.get('/care/alerts/inbox'),
+  getWhatsAppPreference: async () => api.get('/care/alerts/whatsapp-preference'),
+  saveWhatsAppPreference: async (preference: { whatsappNumber: string; whatsappOptIn: boolean }) =>
+    api.put('/care/alerts/whatsapp-preference', preference),
+  acknowledge: async (alertId: string) => api.post(`/care/alerts/${alertId}/acknowledge`),
+  triggerSos: async (input: { confirmed: true; latitude?: number; longitude?: number }) =>
+    api.post('/care/alerts/sos', input),
+};
+
+export const careReportService = {
+  getSummary: async (days = 30) => api.get('/care/reports/summary', { params: { days } }),
+};
+
+export const careShiftService = {
+  getShifts: async () => api.get('/care/shifts'),
+  createShift: async (shift: { caregiverEmail: string; startsAt: string; endsAt: string; confirmed: true }) =>
+    api.post('/care/shifts', shift),
+  cancelShift: async (shiftId: string) => api.delete(`/care/shifts/${shiftId}`),
 };
 
 export default api; 

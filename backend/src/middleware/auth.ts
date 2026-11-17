@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { User, IUser } from '../models/User';
+import { Types } from 'mongoose';
+import { UserRole, findIdentityById } from '../Services/identityService';
 
 interface JwtPayload {
   id: string;
@@ -9,7 +10,14 @@ interface JwtPayload {
 declare global {
   namespace Express {
     interface Request {
-      user?: IUser;
+      user?: {
+        id: string;
+        _id: import('mongoose').Types.ObjectId;
+        name: string;
+        email: string;
+        role: UserRole;
+      };
+      patientId?: import('mongoose').Types.ObjectId;
     }
   }
 }
@@ -31,33 +39,35 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       return res.status(401).json({ message: 'Not authorized to access this route' });
     }
 
+    const jwtSecret = process.env.JWT_SECRET || '';
+    if (!jwtSecret) {
+      res.status(500).json({ message: 'Server configuration error' });
+      return;
+    }
+
+    let decoded: JwtPayload;
     try {
-      console.log('Auth middleware: Verifying token...');
-      const jwtSecret = process.env.JWT_SECRET || '';
-      if (!jwtSecret) {
-        console.error('Auth middleware: JWT_SECRET is not defined in environment variables');
-        return res.status(500).json({ message: 'Server configuration error' });
-      }
-
-      const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
-      console.log('Auth middleware: Token verified, user ID:', decoded.id);
-
-      const user = await User.findById(decoded.id).select('-password');
-      
-      if (!user) {
-        console.log('Auth middleware: User not found in database');
-        return res.status(401).json({ message: 'User not found' });
-      }
-      
-      console.log('Auth middleware: User found:', user._id);
-      req.user = user;
-      next();
-    } catch (error) {
-      console.error('Auth middleware: Token verification error:', error);
+      decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+    } catch {
       return res.status(401).json({ message: 'Not authorized to access this route' });
     }
+
+    const identity = await findIdentityById(decoded.id);
+    if (!identity || !identity.is_active) {
+      res.status(401).json({ message: 'User not found' });
+      return;
+    }
+
+    req.user = {
+      id: identity.id.trim(),
+      _id: new Types.ObjectId(identity.id.trim()),
+      name: identity.name,
+      email: identity.email,
+      role: identity.role,
+    };
+    next();
   } catch (error) {
     console.error('Auth middleware: Unexpected error:', error);
-    next(error);
+    res.status(503).json({ message: 'Authentication service is temporarily unavailable' });
   }
 }; 

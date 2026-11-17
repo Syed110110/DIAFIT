@@ -1,14 +1,12 @@
 import express from 'express';
 import { addFoodEntry, getTodayNutrition, deleteNutritionEntry } from '../controllers/nutritionController';
 import { protect } from '../middleware/auth';
+import { requirePatientScope } from '../middleware/authorization';
 
 const router = express.Router();
 
-// All routes are protected and require authentication
-router.use(protect);
-
-router.post('/', addFoodEntry);
-router.get('/today', getTodayNutrition);
-router.delete('/:entryId', deleteNutritionEntry);
+router.post('/', protect, requirePatientScope('PATIENT', 'CAREGIVER'), addFoodEntry);
+router.get('/today', protect, requirePatientScope('PATIENT', 'CAREGIVER', 'FAMILY_COORDINATOR', 'DOCTOR'), getTodayNutrition);
+router.delete('/:entryId', protect, requirePatientScope('PATIENT'), deleteNutritionEntry);
 
 export default router; 

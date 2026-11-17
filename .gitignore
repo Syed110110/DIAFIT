@@ -35,3 +35,16 @@ pnpm-debug.log*
 *.sw?
 .bolt
 .env
+# Added for DIAFIT
+.env.*
+!.env.example
+dist/
+build/
+*.zip
+*.keystore
+* - Copy.*
+.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.pdf

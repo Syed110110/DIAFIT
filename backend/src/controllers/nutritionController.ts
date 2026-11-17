@@ -5,7 +5,7 @@ import { Profile } from '../models/Profile';
 // Add food entry
 export const addFoodEntry = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     const { meal, foods } = req.body;
     
     if (!meal || !foods || !Array.isArray(foods) || foods.length === 0) {
@@ -30,7 +30,7 @@ export const addFoodEntry = async (req: Request, res: Response) => {
 // Get today's nutrition data
 export const getTodayNutrition = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     
     // Get start and end of today
     const today = new Date();
@@ -89,7 +89,7 @@ export const getTodayNutrition = async (req: Request, res: Response) => {
 // Delete nutrition entry
 export const deleteNutritionEntry = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     const { entryId } = req.params;
     
     const nutritionEntry = await NutritionEntry.findOne({

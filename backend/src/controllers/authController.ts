@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User';
+import bcrypt from 'bcryptjs';
+import { Types } from 'mongoose';
+import { createIdentity, findIdentityByEmail, UserRole, userRoles } from '../Services/identityService';
+import { ensureLegacyUserMirror } from '../Services/legacyUserMirror';
 
 const generateToken = (id: string) => {
   const jwtSecret = process.env.JWT_SECRET;
@@ -19,37 +22,39 @@ const generateToken = (id: string) => {
 
 export const signup = async (req: Request, res: Response) => {
   try {
-    console.log('Signup attempt with data:', { ...req.body, password: '[HIDDEN]' });
     const { name, email, password } = req.body;
-
-    // Check if user exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      console.log('Signup failed: User already exists with email:', email);
-      return res.status(400).json({ message: 'User already exists' });
+    if (typeof name !== 'string' || !name.trim() || typeof email !== 'string' ||
+        !email.trim() || typeof password !== 'string' || password.length < 8) {
+      return res.status(400).json({ message: 'Provide a name, valid email, and password of at least 8 characters' });
     }
 
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      password,
+    const passwordHash = await bcrypt.hash(password, 12);
+    const user = await createIdentity({
+      id: new Types.ObjectId().toString(),
+      name: name.trim(),
+      email: email.trim(),
+      passwordHash,
+      role: 'PATIENT',
     });
-
-    if (user) {
-      console.log('User created successfully:', user._id);
-      const token = generateToken(user._id.toString());
-      
-      // Send response with token
-      res.status(201).json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        token: token,
-      });
+    try {
+      await ensureLegacyUserMirror(user);
+    } catch (mirrorError) {
+      console.error('Could not create legacy tracker profile for new identity:', mirrorError);
     }
+    const token = generateToken(user.id.trim());
+
+    res.status(201).json({
+      _id: user.id.trim(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token,
+    });
   } catch (error) {
     console.error('Signup error:', error);
+    if ((error as { code?: string }).code === '23505') {
+      return res.status(409).json({ message: 'An account with this email already exists' });
+    }
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -58,32 +63,73 @@ export const signin = async (req: Request, res: Response) => {
   try {
     console.log('Signin attempt with email:', req.body.email);
     const { email, password } = req.body;
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-    // Find user by email
-    const user = await User.findOne({ email }).select('+password');
+    const user = await findIdentityByEmail(email);
     if (!user) {
-      console.log('Signin failed: User not found with email:', email);
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      console.log('Signin failed: Invalid password for user:', user._id);
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch || !user.is_active) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    console.log('User authenticated successfully:', user._id);
-  const token = generateToken(user._id.toString());
+    const token = generateToken(user.id.trim());
     
     res.json({
-      _id: user._id,
+      _id: user.id.trim(),
       name: user.name,
       email: user.email,
-      token: token,
+      role: user.role,
+      token,
     });
   } catch (error) {
     console.error('Signin error:', error);
     res.status(500).json({ message: 'Server error' });
   }
-}; 
+};
+
+export const createUser = async (req: Request, res: Response) => {
+  try {
+    const { name, email, password, role } = req.body as {
+      name?: string;
+      email?: string;
+      password?: string;
+      role?: UserRole;
+    };
+
+    if (!name?.trim() || !email?.trim() || !password || password.length < 8 ||
+        !role || !userRoles.includes(role)) {
+      return res.status(400).json({ message: 'Provide name, email, a password of at least 8 characters, and a valid role' });
+    }
+
+    const user = await createIdentity({
+      id: new Types.ObjectId().toString(),
+      name: name.trim(),
+      email: email.trim(),
+      passwordHash: await bcrypt.hash(password, 12),
+      role,
+    });
+    try {
+      await ensureLegacyUserMirror(user);
+    } catch (mirrorError) {
+      console.error('Could not create legacy tracker profile for provisioned identity:', mirrorError);
+    }
+
+    res.status(201).json({
+      _id: user.id.trim(),
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    });
+  } catch (error) {
+    if ((error as { code?: string }).code === '23505') {
+      return res.status(409).json({ message: 'An account with this email already exists' });
+    }
+    console.error('Admin user creation error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

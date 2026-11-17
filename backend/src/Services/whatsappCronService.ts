@@ -1,4 +1,3 @@
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 import cron from 'node-cron';
 import { User } from '../models/User';
 import twilio from 'twilio';

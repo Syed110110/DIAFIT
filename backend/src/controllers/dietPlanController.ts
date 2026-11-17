@@ -4,7 +4,7 @@ import { DietPlan } from '../models/DietPlan';
 // Get all diet plans for the authenticated user
 export const getUserDietPlans = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     
     console.log(`Fetching diet plans for user: ${userId}`);
     
@@ -20,7 +20,7 @@ export const getUserDietPlans = async (req: Request, res: Response) => {
 // Get a specific diet plan by ID
 export const getDietPlanById = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     const { planId } = req.params;
     
     console.log(`Fetching diet plan ${planId} for user: ${userId}`);
@@ -41,7 +41,7 @@ export const getDietPlanById = async (req: Request, res: Response) => {
 // Create a new diet plan
 export const createDietPlan = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     const { name, meals, totalCarbs, totalCalories } = req.body;
     
     console.log(`Creating diet plan for user: ${userId}`);
@@ -71,7 +71,7 @@ export const createDietPlan = async (req: Request, res: Response) => {
 // Update an existing diet plan
 export const updateDietPlan = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     const { planId } = req.params;
     const { name, meals, totalCarbs, totalCalories } = req.body;
     
@@ -100,7 +100,7 @@ export const updateDietPlan = async (req: Request, res: Response) => {
 // Delete a diet plan
 export const deleteDietPlan = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     const { planId } = req.params;
     
     console.log(`Deleting diet plan ${planId} for user: ${userId}`);

@@ -5,7 +5,7 @@ import { Profile } from '../models/Profile';
 // Add exercise entry
 export const addExerciseEntry = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     console.log('Adding exercise entry for user:', userId);
     
     const { type, duration, caloriesBurned, notes } = req.body;
@@ -36,7 +36,7 @@ export const addExerciseEntry = async (req: Request, res: Response) => {
 // Get today's exercise data
 export const getTodayExercise = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     console.log(`Getting exercise data for user: ${userId}`);
     
     // Get start and end of today
@@ -77,7 +77,7 @@ export const getTodayExercise = async (req: Request, res: Response) => {
 // Delete exercise entry
 export const deleteExerciseEntry = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     const { entryId } = req.params;
     
     console.log(`Deleting exercise entry ${entryId} for user ${userId}`);

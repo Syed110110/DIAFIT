@@ -20,6 +20,12 @@ import { AuthProvider } from './context/AuthContext';
 
 // NEW: Import the SOS Button
 import SosButton from './components/SosButton';
+import AdminUsers from './pages/AdminUsers';
+import CareTeam from './pages/CareTeam';
+import CareLogs from './pages/CareLogs';
+import CareAlerts from './pages/CareAlerts';
+import CareAudit from './pages/CareAudit';
+import ClinicalReport from './pages/ClinicalReport';
 
 // Global Error Boundary
 interface ErrorBoundaryState {
@@ -89,7 +95,7 @@ function App() {
     <ErrorBoundary>
       <AuthProvider>
         {/* Added 'relative' to ensure the absolute positioned SOS button maps correctly to the window */}
-        <div className="min-h-screen relative bg-gray-50 flex flex-col">
+        <div className="dia-theme min-h-screen relative bg-gray-50 flex flex-col">
           <Header />
           <main className="flex-grow">
             <Routes>
@@ -100,7 +106,7 @@ function App() {
               <Route path="/about-us" element={<AboutUs />} />
               
               {/* Protected routes - HIDDEN completely until user logs in */}
-              <Route element={<ProtectedRoute />}>
+              <Route element={<ProtectedRoute allowedRoles={['PATIENT', 'CAREGIVER', 'FAMILY_COORDINATOR', 'DOCTOR']} />}>
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/diet-planner" element={<DietPlanner />} />
@@ -110,6 +116,16 @@ function App() {
                 <Route path="/exercise-tracker" element={<ExerciseTracker />} />
                 <Route path="/medicalInformation" element={<MedicalInformation />} />
                 <Route path="/Ai-Assistant" element={<AiAssistant />} />
+                <Route path="/care-team" element={<CareTeam />} />
+                <Route path="/care-logs" element={<CareLogs />} />
+                <Route path="/care-alerts" element={<CareAlerts />} />
+                <Route path="/clinical-report" element={<ClinicalReport />} />
+              </Route>
+              <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+                <Route path="/admin/users" element={<AdminUsers />} />
+              </Route>
+              <Route element={<ProtectedRoute allowedRoles={['FAMILY_COORDINATOR']} />}>
+                <Route path="/care-audit" element={<CareAudit />} />
               </Route>
             </Routes>
           </main>

@@ -21,32 +21,37 @@ const Login = () => {
     try {
       await login(formData.email, formData.password);
       navigate('/dashboard');
-    } catch (err: any) {
-      setLoginError(err.response?.data?.message || 'Invalid credentials');
+    } catch (err: unknown) {
+      setLoginError(err instanceof Error ? err.message : 'Invalid credentials');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <div className="max-w-4xl w-full bg-white rounded-2xl shadow-xl flex overflow-hidden">
-        <div className="w-1/2 p-8 bg-gradient-to-br from-blue-600 to-purple-600 text-white flex flex-col justify-center">
-          <h1 className="text-4xl font-bold mb-6">Welcome Back!</h1>
-          <p className="text-lg mb-4">Continue your journey to better health with DiaFit</p>
+    <div className="dia-auth-page flex min-h-screen items-center justify-center p-4 sm:p-6">
+      <div className="dia-auth-card flex w-full max-w-5xl flex-col md:flex-row">
+        <div className="dia-auth-aside flex w-full flex-col justify-center gap-5 p-7 text-white sm:p-10 md:w-1/2">
+          <p className="dia-auth-kicker">DiaFit / Daily care coordination</p>
+          <h1 className="mb-0 text-4xl font-semibold">Welcome back.</h1>
+          <p className="mb-1 max-w-md text-lg text-white/75">One clear view for the people supporting everyday care.</p>
           <img 
             src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&q=80"
             alt="Health Monitoring"
-            className="rounded-lg shadow-lg"
+            className="dia-auth-image"
           />
         </div>
 
-        <div className="w-1/2 p-8">
+        <div className="dia-auth-form w-full p-7 sm:p-10 md:w-1/2">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex items-center gap-2 mb-8">
-              <Activity className="h-8 w-8 text-blue-600" />
+              <Activity className="h-8 w-8 text-emerald-800" />
               <h2 className="text-2xl font-bold">Login to DiaFit</h2>
             </div>
+
+            <p className="dia-medical-note rounded-md p-3 text-sm">
+              DiaFit is not a medical device. It does not diagnose conditions or prescribe treatment. Consult a qualified clinician for medical decisions.
+            </p>
 
             {(loginError || error) && (
               <div className="bg-red-50 text-red-600 p-3 rounded-md">
@@ -58,7 +63,7 @@ const Login = () => {
               <label className="block text-sm font-medium text-gray-700">Email</label>
               <input
                 type="email"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                className="mt-1 block w-full shadow-sm focus:border-emerald-700 focus:ring focus:ring-emerald-100"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
                 required
@@ -69,7 +74,7 @@ const Login = () => {
               <label className="block text-sm font-medium text-gray-700">Password</label>
               <input
                 type="password"
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200"
+                className="mt-1 block w-full shadow-sm focus:border-emerald-700 focus:ring focus:ring-emerald-100"
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
                 required
@@ -80,11 +85,11 @@ const Login = () => {
               <div className="flex items-center">
                 <input
                   type="checkbox"
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 rounded border-gray-300 text-emerald-800 focus:ring-emerald-700"
                 />
                 <label className="ml-2 block text-sm text-gray-700">Remember me</label>
               </div>
-              <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-500">
+              <Link to="/forgot-password" className="text-sm font-medium text-emerald-800 hover:text-emerald-950">
                 Forgot password?
               </Link>
             </div>
@@ -92,7 +97,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-md hover:from-blue-700 hover:to-purple-700 transition-colors flex items-center justify-center gap-2"
+              className="dia-primary-button flex w-full items-center justify-center gap-2 px-4 py-3"
             >
               {isLoading ? (
                 'Signing in...'
@@ -106,7 +111,7 @@ const Login = () => {
 
             <p className="text-center text-sm text-gray-600">
               Don't have an account?{' '}
-              <Link to="/signup" className="text-blue-600 hover:text-blue-500 font-medium">
+              <Link to="/signup" className="font-medium text-emerald-800 hover:text-emerald-950">
                 Sign up
               </Link>
             </p>

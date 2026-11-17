@@ -1,5 +1,7 @@
 import express from 'express';
 import twilio from 'twilio';
+import { protect } from '../middleware/auth';
+import { authorizeRoles } from '../middleware/authorization';
 
 const router = express.Router();
 
@@ -8,7 +10,7 @@ const accountSid = process.env.TWILIO_ACCOUNT_SID || '';
 const authToken = process.env.TWILIO_AUTH_TOKEN || '';
 const client = twilio(accountSid, authToken);
 
-router.post('/trigger', async (req, res) => {
+router.post('/trigger', protect, authorizeRoles('ADMIN'), async (req, res) => {
   try {
     console.log("Sending live WhatsApp message via Twilio Gateway...");
 

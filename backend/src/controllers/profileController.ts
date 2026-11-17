@@ -4,7 +4,7 @@ import { Profile } from '../models/Profile';
 // Get user profile
 export const getUserProfile = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     console.log(`Getting profile for user: ${userId}`);
     
     let profile = await Profile.findOne({ user: userId });
@@ -28,7 +28,7 @@ export const getUserProfile = async (req: Request, res: Response) => {
 // Update user profile
 export const updateProfile = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?._id;
+    const userId = req.patientId;
     console.log(`Updating profile for user: ${userId}`);
     console.log('Update profile data received:', req.body);
     
@@ -117,7 +117,7 @@ export const updateProfile = async (req: Request, res: Response) => {
         
         // Create a new healthMetrics object if it doesn't exist
         if (!profile.healthMetrics) {
-          profile.healthMetrics = {} as any;
+          profile.set('healthMetrics', {});
         }
         
         // Only update provided metrics

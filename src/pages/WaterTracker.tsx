@@ -178,13 +178,9 @@ const WaterTracker = () => {
   };
 
   return (
-    <div className={`min-h-screen flex items-center justify-center transition-colors duration-300 ${darkMode ? 'bg-gradient-to-r from-blue-900 to-indigo-900' : 'bg-gradient-to-r from-blue-300 to-indigo-400'}`}>
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <div className={`min-h-screen w-full max-w-full overflow-x-hidden px-3 py-6 transition-colors duration-300 ${darkMode ? 'bg-[var(--dia-ink)]' : 'dia-workspace'}`}>
+      <div className="mx-auto w-full min-w-0 max-w-5xl px-1 py-4 sm:px-4 sm:py-8">
         <div className={`${darkMode ? 'bg-gray-800 bg-opacity-90' : 'bg-white bg-opacity-90'} backdrop-blur-md rounded-2xl shadow-2xl p-8 relative overflow-hidden transition-colors duration-300`}>
-          
-          {/* Floating bubbles for decoration */}
-          <div className={`absolute top-[-40px] left-[-40px] w-24 h-24 ${darkMode ? 'bg-blue-700' : 'bg-blue-200'} opacity-30 rounded-full transition-colors duration-300`}></div>
-          <div className={`absolute bottom-[-40px] right-[-40px] w-28 h-28 ${darkMode ? 'bg-indigo-700' : 'bg-indigo-300'} opacity-30 rounded-full transition-colors duration-300`}></div>
 
           {/* Header and Controls */}
           <div className="flex items-center justify-between mb-8">
@@ -223,7 +219,7 @@ const WaterTracker = () => {
               <p className="text-red-500">{error}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
               
               {/* Water Intake Section */}
               <div className={`flex flex-col items-center justify-center p-8 ${darkMode ? 'bg-gray-700 bg-opacity-70' : 'bg-white bg-opacity-70'} rounded-xl shadow-lg transition-colors duration-300`}>
@@ -270,10 +266,10 @@ const WaterTracker = () => {
               </div>
 
               {/* Progress & Benefits Section */}
-              <div className="space-y-6">
+                <div className="min-w-0 space-y-6">
                 <div className={`${darkMode ? 'bg-gray-700 bg-opacity-70' : 'bg-white bg-opacity-70'} rounded-lg p-6 shadow-lg transition-colors duration-300`}>
                   <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-900'} mb-2 transition-colors duration-300`}>Daily Goal</h3>
-                  <div className={`flex justify-between text-sm ${darkMode ? 'text-blue-300' : 'text-blue-600'} mb-2 transition-colors duration-300`}>
+                  <div className={`flex flex-wrap justify-between gap-x-3 gap-y-1 text-sm ${darkMode ? 'text-blue-300' : 'text-blue-600'} mb-2 transition-colors duration-300`}>
                     <span>Progress</span>
                     <span>{totalGlasses} of {goalGlasses} glasses ({(waterData.totalWaterIntake / 1000).toFixed(1)}L of {(waterData.dailyWaterGoal / 1000).toFixed(1)}L)</span>
                   </div>
